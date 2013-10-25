@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Mongodm : MongoDB ORM that includes support for references and multilevel inheritance." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Mongodm</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/purekid/mongodm">View on GitHub</a>
+
+          <h1 id="project_title">Mongodm</h1>
+          <h2 id="project_tagline">MongoDB ORM that includes support for references and multilevel inheritance.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/purekid/mongodm/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/purekid/mongodm/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="mongodm--" class="anchor" href="#mongodm--"><span class="octicon octicon-link"></span></a>Mongodm  </h1>
+
+<p><a href="http://travis-ci.org/purekid/mongodm"><img src="https://secure.travis-ci.org/purekid/mongodm.png?branch=master" alt="Build Status"></a></p>
+
+<p>a PHP MongoDB ORM ,  simple and flexible</p>
+
+<h2>
+<a name="requirements" class="anchor" href="#requirements"><span class="octicon octicon-link"></span></a>Requirements</h2>
+
+<ul>
+<li>PHP 5.3 or greater</li>
+<li>Mongodb 1.3 or greater</li>
+<li>PHP Mongo extension </li>
+</ul><h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>ORM</li>
+<li>Simple and flexible</li>
+<li>Support for references (lazy loaded)</li>
+<li>Support for multilevel inheritance</li>
+</ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a name="1-setup-in-composerjson" class="anchor" href="#1-setup-in-composerjson"><span class="octicon octicon-link"></span></a>1. Setup in composer.json:</h3>
+
+<pre><code>{
+    "require": {
+        "purekid/mongodm": "dev-master"
+    }
+}
+</code></pre>
+
+<h3>
+<a name="2-install-by-composer" class="anchor" href="#2-install-by-composer"><span class="octicon octicon-link"></span></a>2. Install by composer:</h3>
+
+<pre><code>php composer.phar install
+</code></pre>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a name="setup-database-in---configdatabasephp" class="anchor" href="#setup-database-in---configdatabasephp"><span class="octicon octicon-link"></span></a>Setup database in   config/database.php</h3>
+
+<p>If you want select config section with environment variable APPLICATION_ENV , you should set $config='default' or don't declare $config in your own model class.</p>
+
+<pre><code>return array(
+    'default' =&gt; array(
+        'connection' =&gt; array(
+            'hostnames' =&gt; 'localhost',
+            'database'  =&gt; 'default',
+//          'username'  =&gt; '',
+//          'password'  =&gt; '',
+        )
+    ),
+    'development' =&gt; array(
+        'connection' =&gt; array(
+            'hostnames' =&gt; 'localhost',
+            'database'  =&gt; 'development'
+        )
+    ),
+    'testing' =&gt; array(
+        'connection' =&gt; array(
+            'hostnames' =&gt; 'localhost',
+            'database'  =&gt; 'test'
+        )
+    ),
+    'production' =&gt; array(
+        'connection' =&gt; array(
+            'hostnames' =&gt; 'localhost',
+            'database'  =&gt; 'production'
+        )
+    )
+);
+</code></pre>
+
+<h3>
+<a name="define-a-model-and-enjoy-it" class="anchor" href="#define-a-model-and-enjoy-it"><span class="octicon octicon-link"></span></a>Define a model and enjoy it</h3>
+
+<pre><code>use Purekid\Mongodm\Model;
+
+class User extends Model 
+{
+
+    static $collection = "user";
+
+    /** use specific config section **/
+    public static $config = 'testing';
+
+    /** specific definition for attributes, not necessary! **/
+    protected static $attrs = array(
+
+         // 1 to 1 reference
+        'book_fav' =&gt; array('model'=&gt;'Purekid\Mongodm\Test\Model\Book','type'=&gt;'reference'),
+         // 1 to many references
+        'books' =&gt; array('model'=&gt;'Purekid\Mongodm\Test\Model\Book','type'=&gt;'references'),
+        // you can define default value for attribute
+        'age' =&gt; array('default'=&gt;16,'type'=&gt;'integer'),
+        'money' =&gt; array('default'=&gt;20.0,'type'=&gt;'double'),
+        'hobbies' =&gt; array('default'=&gt;array('love'),'type'=&gt;'array'),
+        'born_time' =&gt; array('type'=&gt;'timestamp'),
+        'family'=&gt;array('type'=&gt;'object')
+
+    );
+
+}
+</code></pre>
+
+<h2>
+<a name="types-supported-for-model-attr" class="anchor" href="#types-supported-for-model-attr"><span class="octicon octicon-link"></span></a>Types Supported for model attr</h2>
+
+<pre><code>$types = [
+    'mixed',  // mixed type 
+    'string',     
+    'reference',  // a reference to another model
+    'references', // references to another model
+    'integer',  
+    'int',  // alias of 'integer'
+    'double',     // float 
+    'timestamp',  // store as MongoTimestamp in Mongodb
+    'boolean',    // true or false
+    'array',    
+    'object'
+]
+</code></pre>
+
+<h2>
+<a name="crud" class="anchor" href="#crud"><span class="octicon octicon-link"></span></a>CRUD</h2>
+
+<h3>
+<a name="create" class="anchor" href="#create"><span class="octicon octicon-link"></span></a>Create</h3>
+
+<pre><code>$user = new User();
+$user-&gt;name = "Michael";
+$user-&gt;age = 18;
+$user-&gt;save();
+</code></pre>
+
+<p>Create with initial value</p>
+
+<pre><code>$user = new User( array('name'=&gt;"John") );
+$user-&gt;age = 20;
+$user-&gt;save();
+</code></pre>
+
+<h3>
+<a name="update" class="anchor" href="#update"><span class="octicon octicon-link"></span></a>Update</h3>
+
+<pre><code>$user-&gt;age = 19;
+</code></pre>
+
+<p>Update attrs by array</p>
+
+<pre><code>$user-&gt;update( array('age'=&gt;18,'hobbies'=&gt;array('music','game') ) ); 
+$user-&gt;save();
+</code></pre>
+
+<h3>
+<a name="retrieve-single-record" class="anchor" href="#retrieve-single-record"><span class="octicon octicon-link"></span></a>Retrieve single record</h3>
+
+<pre><code>$user = User::one( array('name'=&gt;"michael" ) );
+</code></pre>
+
+<p>retrieve one record by MongoId</p>
+
+<pre><code>$id = "517c850641da6da0ab000004";
+
+$id = new \MongoId('517c850641da6da0ab000004'); //another way
+$user = User::id( $id );
+</code></pre>
+
+<h3>
+<a name="retrieve-records" class="anchor" href="#retrieve-records"><span class="octicon octicon-link"></span></a>Retrieve records</h3>
+
+<p>Retrieve records that name is 'Michael' and acount  of owned  books equals 2</p>
+
+<pre><code>$params = array( 'name'=&gt;'Michael','books'=&gt;array('$size'=&gt;2) );
+$users = User::find($params);     // $users is instance of Collection
+echo $users-&gt;count();
+</code></pre>
+
+<h3>
+<a name="retrieve-all-records" class="anchor" href="#retrieve-all-records"><span class="octicon octicon-link"></span></a>Retrieve all records</h3>
+
+<pre><code>$users = User::all();
+</code></pre>
+
+<h3>
+<a name="count-records" class="anchor" href="#count-records"><span class="octicon octicon-link"></span></a>Count records</h3>
+
+<pre><code>$count = User::count(array('age'=&gt;16));
+</code></pre>
+
+<h3>
+<a name="delete-record" class="anchor" href="#delete-record"><span class="octicon octicon-link"></span></a>Delete record</h3>
+
+<pre><code>$user = User::one();
+$user-&gt;delete();    
+</code></pre>
+
+<h2>
+<a name="relationship" class="anchor" href="#relationship"><span class="octicon octicon-link"></span></a>Relationship</h2>
+
+<h3>
+<a name="lazyload-a-11-relationship-record" class="anchor" href="#lazyload-a-11-relationship-record"><span class="octicon octicon-link"></span></a>Lazyload a 1:1 relationship record</h3>
+
+<pre><code>$book = new Book();
+$book-&gt;name = "My Love";
+$book-&gt;price = 15;
+$book-&gt;save();
+
+// !!!remember you must save book before!!!
+$user-&gt;book_fav = $book;
+$user-&gt;save();
+
+// now you can do this
+$user = User::one( array('name'=&gt;"michael" ) );
+echo $user-&gt;book_fav-&gt;name;
+</code></pre>
+
+<h3>
+<a name="lazyload-1many-relationship-records" class="anchor" href="#lazyload-1many-relationship-records"><span class="octicon octicon-link"></span></a>Lazyload 1:many relationship records</h3>
+
+<pre><code>$user = User::one();
+
+$book1 = new Book();
+$book1-&gt;name = "book1";
+$book1-&gt;save();
+
+$book2 = new Book();
+$book2-&gt;name = "book2";
+$book2-&gt;save();
+
+$user-&gt;books = array($book1,$book2);
+//also you can
+$user-&gt;books = Collection::make(array($book1,$book2));
+$user-&gt;save();
+
+//somewhere , load these books
+$user = User::id($id);
+$books = $user-&gt;books;      // $books is a instance of Collection
+</code></pre>
+
+<h3>
+<a name="collection" class="anchor" href="#collection"><span class="octicon octicon-link"></span></a>Collection</h3>
+
+<p>$users is instance of Collection</p>
+
+<pre><code>$users = User::find(  array( 'name'=&gt;'Michael','books'=&gt;array('$size'=&gt;2) ) );    
+$users_other = User::find(  array( 'name'=&gt;'John','books'=&gt;array('$size'=&gt;2) ) );   
+</code></pre>
+
+<p>Count </p>
+
+<pre><code>$users-&gt;count();  
+$users-&gt;isEmpty();
+</code></pre>
+
+<p>Iteration   </p>
+
+<pre><code>foreach($users as $user) { }  
+
+// OR use Closure 
+
+$users-&gt;each(function($user){
+
+})
+</code></pre>
+
+<p>Sort</p>
+
+<pre><code>//sort by age desc
+$users-&gt;sortBy(function($user){
+    return $user-&gt;age;
+});
+
+//sort by name asc
+$users-&gt;sortBy(function($user){
+    return $user-&gt;name;
+} , true);
+
+//reverse collection items
+$users-&gt;reverse();
+</code></pre>
+
+<p>Slice and Take</p>
+
+<pre><code>$users-&gt;slice(0,1);
+$users-&gt;take(2);
+</code></pre>
+
+<p>Map</p>
+
+<pre><code>$func = function($user){
+            if( $user-&gt;age &gt;= 18 ){
+                $user-&gt;is_adult = true;
+                return $user;
+            }
+        };
+
+$adults = $users-&gt;map($func);   
+
+// Notice:  1. $adults is a new collection   2. In original $users , data has changed at the same time. 
+</code></pre>
+
+<p>Filter </p>
+
+<pre><code>$func = function($user){
+            if( $user-&gt;age &gt;= 18 ){
+                return true;
+            }
+        }
+
+$adults = $users-&gt;filter($func); // $adults is a new collection
+</code></pre>
+
+<p>Determine a record exists in the collection by object instance  </p>
+
+<pre><code>$john = User::one(array("name"=&gt;"John"));
+
+$users-&gt;has($john) 
+</code></pre>
+
+<p>Determine a record exists in the collection by numeric index    </p>
+
+<pre><code>$users-&gt;has(0) 
+</code></pre>
+
+<p>Determine a record exists in the collection by MongoID  </p>
+
+<pre><code>$users-&gt;has('518c6a242d12d3db0c000007') 
+</code></pre>
+
+<p>Get a record by numeric index</p>
+
+<pre><code>$users-&gt;get(0) 
+</code></pre>
+
+<p>Get a record by MongoID </p>
+
+<pre><code>$users-&gt;get('518c6a242d12d3db0c000007') 
+</code></pre>
+
+<p>Remove a record by numeric index</p>
+
+<pre><code>$users-&gt;remove(0)  
+</code></pre>
+
+<p>Remove a record  by MongoID</p>
+
+<pre><code>$users-&gt;remove('518c6a242d12d3db0c000007') 
+</code></pre>
+
+<p>Add a single record to collection</p>
+
+<pre><code>$bob = new User( array("name"=&gt;"Bob"));
+$bob-&gt;save();
+$users-&gt;add($bob);
+</code></pre>
+
+<p>Add records to collection</p>
+
+<pre><code>$bob = new User( array("name"=&gt;"Bob"));
+$bob-&gt;save();
+$lisa = new User( array("name"=&gt;"Lisa"));
+$lisa-&gt;save();
+
+$users-&gt;add( array($bob,$lisa) ); 
+</code></pre>
+
+<p>Merge two collection </p>
+
+<pre><code>$users-&gt;add($users_other);  // the collection $users_other appends to end of $users 
+</code></pre>
+
+<p>Export data to a array</p>
+
+<pre><code>$users-&gt;toArray();
+</code></pre>
+
+<h2>
+<a name="inheritance" class="anchor" href="#inheritance"><span class="octicon octicon-link"></span></a>Inheritance</h2>
+
+<h3>
+<a name="define-multilevel-inheritable-models" class="anchor" href="#define-multilevel-inheritable-models"><span class="octicon octicon-link"></span></a>Define multilevel inheritable models:</h3>
+
+<pre><code>use Purekid\Mongodm\Model;
+namespace Demo;
+
+class Human extends Model{
+
+    static $collection = "human";
+
+    protected static $attrs = array(
+        'name' =&gt; array('default'=&gt;'anonym','type'=&gt;'string'),
+        'age' =&gt; array('type'=&gt;'integer'),
+        'gender' =&gt; array('type'=&gt;'string'),
+        'dad' =&gt;  array('type'=&gt;'reference','model'=&gt;'Demo\Human'),
+        'mum' =&gt;  array('type'=&gt;'reference','model'=&gt;'Demo\Human'),
+        'friends' =&gt; array('type'=&gt;'references','model'=&gt;'Demo\Human'),
+    )
+
+}
+
+class Student extends Human{
+
+    protected static $attrs = array(
+        'grade' =&gt; array('type'=&gt;'string'),
+        'classmates' =&gt; array('type'=&gt;'references','model'=&gt;'Demo\Student'),
+    )
+
+}
+</code></pre>
+
+<h3>
+<a name="use" class="anchor" href="#use"><span class="octicon octicon-link"></span></a>Use:</h3>
+
+<pre><code>$bob = new Student( array('name'=&gt;'Bob','age'=&gt; 17 ,'gender'=&gt;'male' ) );
+$bob-&gt;save();
+
+$john = new Student( array('name'=&gt;'John','age'=&gt; 16 ,'gender'=&gt;'male' ) );
+$john-&gt;save();
+
+$lily = new Student( array('name'=&gt;'Lily','age'=&gt; 16 ,'gender'=&gt;'female' ) );
+$lily-&gt;save();
+
+$lisa = new Human( array('name'=&gt;'Lisa','age'=&gt;41 ,'gender'=&gt;'female' ) );
+$lisa-&gt;save();
+
+$david = new Human( array('name'=&gt;'David','age'=&gt;42 ,'gender'=&gt;'male') );
+$david-&gt;save();
+
+$bob-&gt;dad = $david;
+$bob-&gt;mum = $lisa;
+$bob-&gt;classmates = array( $john, $lily );
+$bob-&gt;save();
+</code></pre>
+
+<h3>
+<a name="retrieve-and-check-value" class="anchor" href="#retrieve-and-check-value"><span class="octicon octicon-link"></span></a>Retrieve and check value:</h3>
+
+<pre><code>$bob = Student::one( array("name"=&gt;"Bob") );
+
+echo $bob-&gt;dad-&gt;name;    // David
+
+$classmates = $bob-&gt;classmates;
+
+echo $classmates-&gt;count(); // 2
+
+var_dump($classmates-&gt;get(0)); // john  
+</code></pre>
+
+<h3>
+<a name="retrieve-subclass" class="anchor" href="#retrieve-subclass"><span class="octicon octicon-link"></span></a>Retrieve subclass</h3>
+
+<p>Retrieve all Human records , queries without '_type' because of it's a toplevel class.</p>
+
+<pre><code>$humans = Human::all();
+</code></pre>
+
+<p>Retrieve all Student records , queries with  { "_type":"Student" } because of it's a subclass.</p>
+
+<pre><code>$students = Student::all();
+</code></pre>
+
+<h3>
+<a name="other-static-methods" class="anchor" href="#other-static-methods"><span class="octicon octicon-link"></span></a>Other static methods</h3>
+
+<p>Drop the collection in database</p>
+
+<h5>
+<a name="drop" class="anchor" href="#drop"><span class="octicon octicon-link"></span></a>drop()</h5>
+
+<h3>
+<a name="hooks" class="anchor" href="#hooks"><span class="octicon octicon-link"></span></a>Hooks</h3>
+
+<p>The following hooks are available:</p>
+
+<h5>
+<a name="__init" class="anchor" href="#__init"><span class="octicon octicon-link"></span></a>__init()</h5>
+
+<p>Executed after the constructor has finished</p>
+
+<h5>
+<a name="__preinsert" class="anchor" href="#__preinsert"><span class="octicon octicon-link"></span></a>__preInsert()</h5>
+
+<p>Executed before saving a new record</p>
+
+<h5>
+<a name="__postinsert" class="anchor" href="#__postinsert"><span class="octicon octicon-link"></span></a>__postInsert()</h5>
+
+<p>Executed after saving a new record</p>
+
+<h5>
+<a name="__preupdate" class="anchor" href="#__preupdate"><span class="octicon octicon-link"></span></a>__preUpdate()</h5>
+
+<p>Executed before saving an existing record</p>
+
+<h5>
+<a name="__postupdate" class="anchor" href="#__postupdate"><span class="octicon octicon-link"></span></a>__postUpdate()</h5>
+
+<p>Executed after saving an existing record</p>
+
+<h5>
+<a name="__presave" class="anchor" href="#__presave"><span class="octicon octicon-link"></span></a>__preSave()</h5>
+
+<p>Executed before saving a record</p>
+
+<h5>
+<a name="__postsave" class="anchor" href="#__postsave"><span class="octicon octicon-link"></span></a>__postSave()</h5>
+
+<p>Executed after saving a record</p>
+
+<h5>
+<a name="__predelete" class="anchor" href="#__predelete"><span class="octicon octicon-link"></span></a>__preDelete()</h5>
+
+<p>Executed before deleting a record</p>
+
+<h5>
+<a name="__postdelete" class="anchor" href="#__postdelete"><span class="octicon octicon-link"></span></a>__postDelete()</h5>
+
+<p>Executed after deleting a record</p>
+
+<h2>
+<a name="special-thanks-to" class="anchor" href="#special-thanks-to"><span class="octicon octicon-link"></span></a>Special thanks to</h2>
+
+<p><a href="https://github.com/mikelbring">mikelbring</a>
+<a href="https://github.com/hpaul/">Paul Hrimiuc</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Mongodm maintained by <a href="https://github.com/purekid">purekid</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
