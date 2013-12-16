@@ -397,7 +397,7 @@ abstract class Model
 		$class = get_called_class();
 		$types = $class::getModelTypes();
 		if(count($types) > 1){
-			$params['_type'] = $class::get_class_name(false);
+			// $params['_type'] = $class::get_class_name(false);
 		}
 		$result =  self::connection()->find_one(static::$collection, $params , $fields);
 		if($result){
@@ -423,7 +423,7 @@ abstract class Model
 		$class = get_called_class();
 		$types = $class::getModelTypes();
 		if(count($types) > 1){
-			$params['_type'] = $class::get_class_name(false);
+			// $params['_type'] = $class::get_class_name(false);
 		}
 		
 		$results =  self::connection()->find(static::$collection, $params, $fields);
@@ -462,7 +462,7 @@ abstract class Model
 		$types = $class::getModelTypes();
 		$params = array();
 		if(count($types) > 1){
-			$params['_type'] = $class::get_class_name(false);
+			// $params['_type'] = $class::get_class_name(false);
 		}
 		
 		return self::find($params,$fields,$sort);
@@ -496,7 +496,7 @@ abstract class Model
 		$class = get_called_class();
 		$types = $class::getModelTypes();
 		if(count($types) > 1){
-			$params['_type'] = $class::get_class_name(false);
+			// $params['_type'] = $class::get_class_name(false);
 		}
 		$count = self::connection()->count(self::collectionName(),$params);
 		return $count;
