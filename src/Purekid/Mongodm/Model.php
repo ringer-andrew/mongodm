@@ -45,6 +45,8 @@ abstract class Model
   const DATA_TYPE_OBJ        = 'obj';
   const DATA_TYPE_OBJECT     = 'object';
 
+ 	private static $driverVersion = \Mongo::VERSION;
+ 	
 	public $cleanData = array();
 
 	/**
@@ -88,8 +90,11 @@ abstract class Model
      */
     private $_tempId = null;
 	
-	public function __construct( $data = array(), $mapFields = false)
+	public function __construct($data = array(), $mapFields = false)
 	{
+		
+		// var_dump('Model.__construct('.json_encode($data).', '.json_encode($mapFields).')');
+		
         if($mapFields === true) {
           $data = self::mapFields($data, true);
         }
@@ -104,23 +109,31 @@ abstract class Model
 			$this->_connection = MongoDB::instance($config);
 		}
 
- 		$this->update($data,true);
+ 		$this->inform($data,true);
         if(isset($data['_id']) && $data['_id'] instanceof \MongoId){
             $this->exists = true;
         }else{
             $this->initAttrs();
         }
  		$this->initTypes();
- 		$this->__init();
+ 		$this->__init(); 		
+ 		
+ 		// If new model construct setup bootstrap behavior
+ 		if(!isset($mapFields)) {
+	 		// var_dump('Model.__construct('.json_encode($data).', '.json_encode($mapFields).')');
+	 		
+	 		// Initalize Bootstrap
+	 		new \Bootstrap(static::$collection, self::getAttrs());
+ 		}
  		
 	}
 
 	/**
-	 * Update data by a array
+	 * Inform data by a array
 	 * @param array $cleanData
 	 * @return boolean
 	 */
-	public function update(array $cleanData,$isInit = false)
+	public function inform(array $cleanData,$isInit = false)
 	{
 		if($isInit){
 			$attrs = $this->getAttrs();
@@ -209,6 +222,10 @@ abstract class Model
 	public function save($options = array())
 	{
 
+		var_dump('save('.json_encode($options).')');
+		// var_dump($this->cleanData);
+		// var_dump($this);
+		
         if($this->_isEmbed){
             return false;
         }
@@ -224,6 +241,9 @@ abstract class Model
 		
 		if ($this->exists)
 		{
+			
+			var_dump('exists');
+			
 			$this->__preUpdate();
             $updateQuery = array();
 
@@ -240,8 +260,15 @@ abstract class Model
 		}
 		else
 		{
+			var_dump('!exists');
+			// var_dump($this);
+			// var_dump($this->cleanData);
+			
 			$this->__preInsert();
             $data = self::mapFields($this->cleanData);
+            
+            var_dump(json_encode($data));
+            
 			$insert = $this->_connection->insert($this->collectionName(), $data, $options);
 			$success = !is_null($this->cleanData['_id'] = $insert['_id']);
 			if($success){
@@ -256,7 +283,80 @@ abstract class Model
 		$this->__postSave();
 		
 		return $success;
+	}
+	
+	/**
+	 * Insert a record
+	 *
+	 * @param  array $params
+	 * @param  array $fields
+	 * @return Model
+	 */
+	public static function insert($data = array(), $options = array())
+	{
+		// var_dump('Model.insert('.json_encode($data).', '.json_encode($options).')');
+
+		// Run Bootstrap functions (Validate & Format)
+		$data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'write');
+	
+		// Security checks for valid query paramaters
+		if(isset($data) && is_object($data) && isset($data->cleanData) && is_array($data->cleanData) && !empty($data->cleanData)) {
+			$result =  self::connection()->insert(static::$collection, $data->cleanData, $options);
+			if($result){
+				return  Hydrator::hydrate(get_called_class(), $data->cleanData ,"one");
+			}
+		}
+	
+		return false;
+	}
+	
+	/**
+	 * Update a record
+	 *
+	 * @param  array $params
+	 * @param  array $fields
+	 * @return Model
+	 */
+	public static function update($params = array(), $data = array(), $fields = array())
+	{
+		var_dump('Model.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).')');
+	
+		// Run Bootstrap functions (Validate & Format)
+		$params = \Bootstrap::checkParams($params);
+		$data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'write');
+		$fields = \Bootstrap::checkFields($fields);
 		
+		var_dump(json_encode($data));
+	
+		// Security checks for valid query paramaters
+		if(isset($data) && is_object($data) && isset($data->cleanData) && is_array($data->cleanData) && !empty($data->cleanData) && isset($fields) && is_array($fields) && !empty($fields)) {
+			
+			if(self::$driverVersion >= '1.3.0') {
+				
+				$result = self::connection()->findAndModify(
+					static::$collection,
+					$params, 
+					array('$set' => $data->cleanData), 
+					$fields, 
+					array('sort'=>array(), 'new' => true)
+				);
+				
+			} else {
+				
+				$result = self::connection()->update(
+					static::$collection,
+					$params, 
+					array('$set' => $data->cleanData),
+					array('multiple' => false, 'safe' => true)
+				);
+			}
+
+			if(isset($result)){
+				return  Hydrator::hydrate(get_called_class(), $result ,"one");
+			}
+		}
+	
+		return false;
 	}
 	
 	/**
@@ -394,14 +494,24 @@ abstract class Model
 	 */
 	public static function one($params = array(),$fields = array())
 	{
+		// var_dump('Model.one('.json_encode($params).', '.json_encode($fields).')');
+
 		$class = get_called_class();
 		$types = $class::getModelTypes();
 		if(count($types) > 1){
 			// $params['_type'] = $class::get_class_name(false);
 		}
-		$result =  self::connection()->find_one(static::$collection, $params , $fields);
-		if($result){
-			return  Hydrator::hydrate(get_called_class(), $result ,"one");
+		
+		// Run Bootstrap functions (Validate & Format)
+		$params = \Bootstrap::checkParams($params);
+		$fields = \Bootstrap::checkFields($fields);
+		
+		// Security checks for valid query paramaters
+		if(isset($fields) && is_array($fields) && !empty($fields)) {
+			$result =  self::connection()->find_one(static::$collection, $params , $fields);
+			if($result){
+				return  Hydrator::hydrate(get_called_class(), $result ,"one");
+			}
 		}
 	
 		return null;
@@ -426,7 +536,14 @@ abstract class Model
 			// $params['_type'] = $class::get_class_name(false);
 		}
 		
-		$results =  self::connection()->find(static::$collection, $params, $fields);
+		// Run Bootstrap functions (Validate & Format)
+		$params = \Bootstrap::checkParams($params);
+		$fields = \Bootstrap::checkFields($fields);
+		
+		// Security checks for valid query paramaters
+		if(isset($fields) && is_array($fields) && !empty($fields)) {
+			$results =  self::connection()->find(static::$collection, $params, $fields);
+		}
 	
 		$count = $results->count();
 	

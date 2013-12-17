@@ -35,12 +35,16 @@ class Hydrator
 	
 	private static function pack($class,$result)
 	{
+		// var_dump('Hydrator.pack('.json_encode($class).', '.json_encode($result).')');
+		
 		$model = new $class($result, true);
 		if (isset($model->cleanData['_id']))
 		{
 			$id = (string) $model->cleanData['_id'];
 		}
-		return $model;
+		
+		// Run Document formator
+		return \Bootstrap::checkDocument($model, 'read');
 		
 	}
 	
