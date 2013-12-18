@@ -192,6 +192,44 @@ abstract class Model
         }
 		return null;
 	}
+	
+	/**
+	 * Delete this record
+	 *
+	 * @param  array $options
+	 * @return boolean
+	 */
+	public function delete($params = array(), $options = array())
+	{
+		
+		// var_dump('Model.delete('.json_encode($params).', '.json_encode($options).')');
+		$this->__preDelete();
+		
+		// Run Bootstrap functions (Validate & Format)
+		$_params = \Bootstrap::checkParams($params);
+		$_data = \Bootstrap::checkDocument((object)array('cleanData' => array()), 'delete');
+		
+		// Security checks for valid query paramaters
+		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData)) {
+				
+			// var_dump('self::connection()->update('.static::$collection.', '.json_encode($_params).', '.json_encode(array('$set' => $_data->cleanData)).')');
+				
+			$status = self::connection()->update(
+				static::$collection,
+				$_params,
+				array('$set' => $_data->cleanData),
+				array('multiple' => false, 'safe' => true)
+			);
+	
+			if(isset($status) && isset($status['n']) && $status['n'] == true) {
+				$this->__postDelete();
+				return true;
+			}	
+		}
+	
+		
+		return false;
+	}
 
 	/**
 	 * Delete this record
@@ -199,7 +237,7 @@ abstract class Model
 	 * @param  array $options
 	 * @return boolean 
 	 */
-	public function delete($options = array())
+	public function _delete($options = array())
 	{
 		$this->__preDelete();
 		
@@ -297,13 +335,15 @@ abstract class Model
 		// var_dump('Model.insert('.json_encode($data).', '.json_encode($options).')');
 
 		// Run Bootstrap functions (Validate & Format)
-		$data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'write');
+		$_data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'insert');
 	
 		// Security checks for valid query paramaters
-		if(isset($data) && is_object($data) && isset($data->cleanData) && is_array($data->cleanData) && !empty($data->cleanData)) {
-			$result =  self::connection()->insert(static::$collection, $data->cleanData, $options);
+		if(isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData)) {
+			$result =  self::connection()->insert(static::$collection, $_data->cleanData, $options);
 			if($result){
-				return  Hydrator::hydrate(get_called_class(), $data->cleanData ,"one");
+				return  Hydrator::hydrate(get_called_class(), $_data->cleanData ,"one");
+			} else {
+				// var_dump(self::connection()->lastError());
 			}
 		}
 	
@@ -319,41 +359,48 @@ abstract class Model
 	 */
 	public static function update($params = array(), $data = array(), $fields = array())
 	{
-		var_dump('Model.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).')');
+		// var_dump('Model.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).')');
 	
 		// Run Bootstrap functions (Validate & Format)
-		$params = \Bootstrap::checkParams($params);
-		$data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'write');
-		$fields = \Bootstrap::checkFields($fields);
+		$_params = \Bootstrap::checkParams($params);
+		$_data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'update');
+		$_fields = \Bootstrap::checkFields($fields);
 		
-		var_dump(json_encode($data));
+		// var_dump(json_encode($_data));
 	
 		// Security checks for valid query paramaters
-		if(isset($data) && is_object($data) && isset($data->cleanData) && is_array($data->cleanData) && !empty($data->cleanData) && isset($fields) && is_array($fields) && !empty($fields)) {
+		if(isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
+			
+			// var_dump('self::connection()->findAndModify('.static::$collection.', '.json_encode($_params).', '.json_encode(array('$set' => $_data->cleanData)).', '.json_encode(count($_fields)).', '.json_encode(array('sort'=>array(), 'new' => true)).')');
 			
 			if(self::$driverVersion >= '1.3.0') {
 				
 				$result = self::connection()->findAndModify(
 					static::$collection,
-					$params, 
-					array('$set' => $data->cleanData), 
-					$fields, 
+					$_params, 
+					array('$set' => $_data->cleanData), 
+					$_fields, 
 					array('sort'=>array(), 'new' => true)
 				);
 				
 			} else {
 				
-				$result = self::connection()->update(
+				$status = self::connection()->update(
 					static::$collection,
-					$params, 
-					array('$set' => $data->cleanData),
+					$_params, 
+					array('$set' => $_data->cleanData),
 					array('multiple' => false, 'safe' => true)
 				);
+				
+				if(isset($status) && isset($status['n']) && $status['n'] == true) {
+					return self::one($params, $fields);
+				}
 			}
-
-			if(isset($result)){
+			
+			if(isset($result) && $result !== false){
 				return  Hydrator::hydrate(get_called_class(), $result ,"one");
 			}
+			
 		}
 	
 		return false;
@@ -530,6 +577,8 @@ abstract class Model
 	public static function find($params = array(), $sort = array(), $fields = array() , $limit = null , $skip = null)
 	{
 	
+		// var_dump('find('.json_encode($params).', '.json_encode($sort).', '.json_encode(count($fields)).')');
+		
 		$class = get_called_class();
 		$types = $class::getModelTypes();
 		if(count($types) > 1){
