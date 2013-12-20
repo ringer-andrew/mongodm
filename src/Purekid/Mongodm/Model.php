@@ -203,11 +203,18 @@ abstract class Model
 	{
 		
 		// var_dump('Model.delete('.json_encode($params).', '.json_encode($options).')');
+		
 		$this->__preDelete();
 		
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams($params);
-		$_data = \Bootstrap::checkDocument((object)array('cleanData' => array()), 'delete');
+		$_data = \Bootstrap::checkData((object)array('cleanData' => array(
+			'$set' => array(
+				'deleted' => 1
+			)
+		)), 'delete');
+		
+		// var_dump($_data);
 		
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData)) {
@@ -217,10 +224,10 @@ abstract class Model
 			$status = self::connection()->update(
 				static::$collection,
 				$_params,
-				array('$set' => $_data->cleanData),
+				$_data->cleanData,
 				array('multiple' => false, 'safe' => true)
 			);
-	
+			
 			if(isset($status) && isset($status['n']) && $status['n'] == true) {
 				$this->__postDelete();
 				return true;
@@ -335,11 +342,15 @@ abstract class Model
 		// var_dump('Model.insert('.json_encode($data).', '.json_encode($options).')');
 
 		// Run Bootstrap functions (Validate & Format)
-		$_data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'insert');
+		$_data = \Bootstrap::checkData((object)array('cleanData' => $data), 'insert');
 	
 		// Security checks for valid query paramaters
 		if(isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData)) {
-			$result =  self::connection()->insert(static::$collection, $_data->cleanData, $options);
+			$result =  self::connection()->insert(
+				static::$collection, 
+				$_data->cleanData, 
+				$options
+			);
 			if($result){
 				return  Hydrator::hydrate(get_called_class(), $_data->cleanData ,"one");
 			} else {
@@ -363,44 +374,47 @@ abstract class Model
 	
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams($params);
-		$_data = \Bootstrap::checkDocument((object)array('cleanData' => $data), 'update');
+		$_data = \Bootstrap::checkData((object)array('cleanData' => $data), 'update');
 		$_fields = \Bootstrap::checkFields($fields);
-		
-		// var_dump(json_encode($_data));
+	
+		// var_dump($_data);
 	
 		// Security checks for valid query paramaters
-		if(isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
-			
-			// var_dump('self::connection()->findAndModify('.static::$collection.', '.json_encode($_params).', '.json_encode(array('$set' => $_data->cleanData)).', '.json_encode(count($_fields)).', '.json_encode(array('sort'=>array(), 'new' => true)).')');
+		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
+				
+			// var_dump('db.patients.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array('sort'=>array(), 'new' => true)).')');
 			
 			if(self::$driverVersion >= '1.3.0') {
-				
+	
 				$result = self::connection()->findAndModify(
 					static::$collection,
-					$_params, 
-					array('$set' => $_data->cleanData), 
-					$_fields, 
+					$_params,
+					$_data->cleanData,
+					$_fields,
 					array('sort'=>array(), 'new' => true)
 				);
-				
+	
 			} else {
-				
+	
 				$status = self::connection()->update(
 					static::$collection,
-					$_params, 
-					array('$set' => $_data->cleanData),
+					$_params,
+					$_data->cleanData,
 					array('multiple' => false, 'safe' => true)
 				);
 				
+				// var_dump($status);
+				// var_dump(self::connection()->lastError());
+	
 				if(isset($status) && isset($status['n']) && $status['n'] == true) {
 					return self::one($params, $fields);
 				}
 			}
-			
+				
 			if(isset($result) && $result !== false){
 				return  Hydrator::hydrate(get_called_class(), $result ,"one");
 			}
-			
+				
 		}
 	
 		return false;

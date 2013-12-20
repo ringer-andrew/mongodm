@@ -44,7 +44,7 @@ class Hydrator
 		}
 		
 		// Run Document formator
-		return \Bootstrap::checkDocument($model, 'read');
+		return \Bootstrap::checkData($model, 'read');
 		
 	}
 	
