@@ -109,7 +109,9 @@ abstract class Model
 			$this->_connection = MongoDB::instance($config);
 		}
 
- 		$this->inform($data,true);
+		if(isset($data)) {
+ 			$this->inform($data,true);
+		}
         if(isset($data['_id']) && $data['_id'] instanceof \MongoId){
             $this->exists = true;
         }else{
@@ -267,8 +269,8 @@ abstract class Model
 	public function save($options = array())
 	{
 
-		var_dump('save('.json_encode($options).')');
-		// var_dump($this->cleanData);
+		// var_dump('save('.json_encode($options).')');
+		// ($this->cleanData);
 		// var_dump($this);
 		
         if($this->_isEmbed){
@@ -287,7 +289,7 @@ abstract class Model
 		if ($this->exists)
 		{
 			
-			var_dump('exists');
+			// ('exists');
 			
 			$this->__preUpdate();
             $updateQuery = array();
@@ -305,14 +307,14 @@ abstract class Model
 		}
 		else
 		{
-			var_dump('!exists');
+			// var_dump('!exists');
 			// var_dump($this);
 			// var_dump($this->cleanData);
 			
 			$this->__preInsert();
             $data = self::mapFields($this->cleanData);
             
-            var_dump(json_encode($data));
+            // var_dump(json_encode($data));
             
 			$insert = $this->_connection->insert($this->collectionName(), $data, $options);
 			$success = !is_null($this->cleanData['_id'] = $insert['_id']);
@@ -368,9 +370,11 @@ abstract class Model
 	 * @param  array $fields
 	 * @return Model
 	 */
-	public static function update($params = array(), $data = array(), $fields = array())
+	public static function update($params = array(), $data = array(), $fields = array(), $options = array())
 	{
 		// var_dump('Model.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).')');
+		
+		$defaultOptions = array('multiple' => false, 'safe' => true);
 	
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams($params);
@@ -382,7 +386,7 @@ abstract class Model
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
 				
-			// var_dump('db.patients.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array('sort'=>array(), 'new' => true)).')');
+			// var_dump('db.patients.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
 			
 			if(self::$driverVersion >= '1.3.0') {
 	
@@ -391,7 +395,7 @@ abstract class Model
 					$_params,
 					$_data->cleanData,
 					$_fields,
-					array('sort'=>array(), 'new' => true)
+					array_merge($defaultOptions, $options)
 				);
 	
 			} else {
@@ -400,7 +404,7 @@ abstract class Model
 					static::$collection,
 					$_params,
 					$_data->cleanData,
-					array('multiple' => false, 'safe' => true)
+					array_merge($defaultOptions, $options) // array('multiple' => false, 'safe' => true)
 				);
 				
 				// var_dump($status);

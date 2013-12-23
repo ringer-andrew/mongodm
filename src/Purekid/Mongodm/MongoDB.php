@@ -165,7 +165,8 @@ class MongoDB
 		}
 		catch (\MongoConnectionException $e)
 		{
-			throw new \Exception('Unable to connect to MongoDB server at ' . $config['hostnames']);
+			// throw new \Exception('Unable to connect to MongoDB server at ' . $config['hostnames']);
+			throw new \Exception('Unable to connect to MongoDB server');
 		}
 
 		if (!isset($config['database']))
