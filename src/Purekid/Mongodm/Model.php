@@ -124,8 +124,10 @@ abstract class Model
  		if(!isset($mapFields)) {
 	 		// var_dump('Model.__construct('.json_encode($data).', '.json_encode($mapFields).')');
 	 		
-	 		// Initalize Bootstrap
-	 		new \Bootstrap(static::$collection, self::getAttrs());
+ 			if(isset(static::$collection)) {
+		 		// Initalize Bootstrap
+		 		new \Bootstrap(static::$collection, self::getAttrs());
+ 			}
  		}
  		
 	}
@@ -610,27 +612,28 @@ abstract class Model
 		// Security checks for valid query paramaters
 		if(isset($fields) && is_array($fields) && !empty($fields)) {
 			$results =  self::connection()->find(static::$collection, $params, $fields);
+
+			if(Check::validReturn($results)) {
+				if ( ! is_null($limit))
+				{
+					$results->limit($limit);
+				}
+				
+				if( !  is_null($skip))
+				{
+					$results->skip($skip);
+				}
+				
+				if ( ! empty($sort))
+				{
+					$results->sort($sort);
+				}
+				
+				return Hydrator::hydrate(get_called_class(), $results);
+			}
 		}
-	
-		$count = $results->count();
-	
-		if ( ! is_null($limit))
-		{
-			$results->limit($limit);
-		}
-	
-		if( !  is_null($skip))
-		{
-			$results->skip($skip);
-		}
-	
-		if ( ! empty($sort))
-		{
-			$results->sort($sort);
-		}
-	
-		return Hydrator::hydrate(get_called_class(), $results);
-	
+		
+		return false;
 	}
 	
 	/**
