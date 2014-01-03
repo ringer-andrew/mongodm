@@ -613,7 +613,7 @@ abstract class Model
 		if(isset($fields) && is_array($fields) && !empty($fields)) {
 			$results =  self::connection()->find(static::$collection, $params, $fields);
 
-			if(Check::validReturn($results)) {
+			if(\Check::validReturn($results)) {
 				if ( ! is_null($limit))
 				{
 					$results->limit($limit);
