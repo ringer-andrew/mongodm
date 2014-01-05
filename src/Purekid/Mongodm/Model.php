@@ -118,18 +118,7 @@ abstract class Model
             $this->initAttrs();
         }
  		$this->initTypes();
- 		$this->__init(); 		
- 		
- 		// If new model construct setup bootstrap behavior
- 		if(!isset($mapFields)) {
-	 		// var_dump('Model.__construct('.json_encode($data).', '.json_encode($mapFields).')');
-	 		
- 			if(isset(static::$collection)) {
-		 		// Initalize Bootstrap
-		 		new \Bootstrap(static::$collection, self::getAttrs());
- 			}
- 		}
- 		
+ 		$this->__init();
 	}
 
 	/**
@@ -211,7 +200,7 @@ abstract class Model
 		$this->__preDelete();
 		
 		// Run Bootstrap functions (Validate & Format)
-		$_params = \Bootstrap::checkParams($params);
+		$_params = \Bootstrap::checkParams(get_called_class(), $params);
 		$_data = \Bootstrap::checkData((object)array('cleanData' => array(
 			'$set' => array(
 				'deleted' => 1
@@ -374,22 +363,20 @@ abstract class Model
 	 */
 	public static function update($params = array(), $data = array(), $fields = array(), $options = array())
 	{
-		// var_dump('Model.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).')');
+		// (static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).')');
 		
-		$defaultOptions = array('multiple' => false, 'safe' => true);
+		$defaultOptions = array('multi' => false, 'safe' => true);
 	
 		// Run Bootstrap functions (Validate & Format)
-		$_params = \Bootstrap::checkParams($params);
+		$_params = \Bootstrap::checkParams(get_called_class(), $params);
 		$_data = \Bootstrap::checkData((object)array('cleanData' => $data), 'update');
-		$_fields = \Bootstrap::checkFields($fields);
-	
-		// var_dump($_data);
+		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
 	
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
 				
-			// var_dump('db.patients.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
-			
+			// var_dump('db.'.static::$collection.'.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
+
 			if(self::$driverVersion >= '1.3.0') {
 	
 				$result = self::connection()->findAndModify(
@@ -406,11 +393,12 @@ abstract class Model
 					static::$collection,
 					$_params,
 					$_data->cleanData,
-					array_merge($defaultOptions, $options) // array('multiple' => false, 'safe' => true)
+					array_merge($defaultOptions, $options)
 				);
 				
 				// var_dump($status);
 				// var_dump(self::connection()->lastError());
+				
 	
 				if(isset($status) && isset($status['n']) && $status['n'] == true) {
 					return self::one($params, $fields);
@@ -559,9 +547,9 @@ abstract class Model
 	 * @param  array $fields
 	 * @return Model
 	 */
-	public static function one($params = array(),$fields = array())
+	public static function one($params = array(), $fields = array())
 	{
-		// var_dump('Model.one('.json_encode($params).', '.json_encode($fields).')');
+		// (static::$collection.'.one('.json_encode($params).', '.json_encode($fields).')');
 
 		$class = get_called_class();
 		$types = $class::getModelTypes();
@@ -570,8 +558,8 @@ abstract class Model
 		}
 		
 		// Run Bootstrap functions (Validate & Format)
-		$params = \Bootstrap::checkParams($params);
-		$fields = \Bootstrap::checkFields($fields);
+		$params = \Bootstrap::checkParams(get_called_class(), $params);
+		$fields = \Bootstrap::checkFields(get_called_class(), $fields);
 		
 		// Security checks for valid query paramaters
 		if(isset($fields) && is_array($fields) && !empty($fields)) {
@@ -606,13 +594,16 @@ abstract class Model
 		}
 		
 		// Run Bootstrap functions (Validate & Format)
-		$params = \Bootstrap::checkParams($params);
-		$fields = \Bootstrap::checkFields($fields);
+		$params = \Bootstrap::checkParams(get_called_class(), $params);
+		$fields = \Bootstrap::checkFields(get_called_class(), $fields);
 		
 		// Security checks for valid query paramaters
 		if(isset($fields) && is_array($fields) && !empty($fields)) {
+			
+			// var_dump('db.'.static::$collection.'.find('.json_encode($params).', '.json_encode($fields).')');
+			
 			$results =  self::connection()->find(static::$collection, $params, $fields);
-
+			
 			if(\Check::validReturn($results)) {
 				if ( ! is_null($limit))
 				{
@@ -1174,7 +1165,7 @@ abstract class Model
      * Get all defined attributes in $attrs ( extended by parent class )
      * @return array
      */
-    protected static function getAttrs(){
+    public static function getAttrs(){
 
         $class = get_called_class();
         $parent = get_parent_class($class);
