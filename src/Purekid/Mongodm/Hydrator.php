@@ -33,7 +33,7 @@ class Hydrator
 		
 	}
 	
-	private static function pack($class,$result)
+	private static function pack($class, $result)
 	{
 		// var_dump('Hydrator.pack('.json_encode($class).', '.json_encode($result).')');
 		
@@ -44,7 +44,7 @@ class Hydrator
 		}
 		
 		// Run Document formator
-		return \Bootstrap::checkData($model, 'read');
+		return \Bootstrap::checkData($class, $model, 'read');
 		
 	}
 	

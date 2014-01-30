@@ -201,7 +201,7 @@ abstract class Model
 		
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams(get_called_class(), $params);
-		$_data = \Bootstrap::checkData((object)array('cleanData' => array(
+		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => array(
 			'$set' => array(
 				'deleted' => 1
 			)
@@ -335,10 +335,15 @@ abstract class Model
 		// var_dump('Model.insert('.json_encode($data).', '.json_encode($options).')');
 
 		// Run Bootstrap functions (Validate & Format)
-		$_data = \Bootstrap::checkData((object)array('cleanData' => $data), 'insert');
+		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => $data), 'insert');
+		
+		// var_dump($_data);
 	
 		// Security checks for valid query paramaters
 		if(isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData)) {
+			
+			// var_dump('db.'.static::$collection.'.insert('.json_encode($_data->cleanData).', '.json_encode($options).')');
+			
 			$result =  self::connection()->insert(
 				static::$collection, 
 				$_data->cleanData, 
@@ -369,7 +374,7 @@ abstract class Model
 	
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams(get_called_class(), $params);
-		$_data = \Bootstrap::checkData((object)array('cleanData' => $data), 'update');
+		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => $data), 'update');
 		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
 	
 		// Security checks for valid query paramaters
