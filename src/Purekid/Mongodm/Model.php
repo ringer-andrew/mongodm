@@ -368,7 +368,7 @@ abstract class Model
 	 */
 	public static function update($params = array(), $data = array(), $fields = array(), $options = array())
 	{
-		// (static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).')');
+		var_dump(static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).')');
 		
 		$defaultOptions = array('multi' => false, 'safe' => true);
 	
@@ -376,10 +376,10 @@ abstract class Model
 		$_params = \Bootstrap::checkParams(get_called_class(), $params);
 		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => $data), 'update');
 		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
-	
+		
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
-				
+			
 			var_dump('db.'.static::$collection.'.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
 			var_dump(self::$driverVersion);
 			
