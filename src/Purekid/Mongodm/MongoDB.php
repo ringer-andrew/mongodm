@@ -308,6 +308,15 @@ class MongoDB
 				'fields'          => $fields
 		));
 	}
+	
+	public function findAndModify($collection_name, array $criteria, array $newObj, $options = array())
+	{
+		return $this->_call('findAndModify', array(
+			'collection_name' => $collection_name,
+			'criteria'        => $criteria,
+			'options'         => $options
+		), $newObj);
+	}
 
 	public function group( $collection_name, $keys , array $initial , $reduce, array $condition= array() )
 	{
@@ -459,6 +468,9 @@ class MongoDB
 				break;
 			case 'find':
 				$r = $c->find($query, $fields);
+				break;
+			case 'findAndModify':
+				$r = $c->findAndModify($criteria, $values, $options);
 				break;
 			case 'group':
 				$r = $c->group($keys, $initial, $reduce, $condition);

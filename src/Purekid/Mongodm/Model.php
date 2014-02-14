@@ -383,15 +383,24 @@ abstract class Model
 			// var_dump('db.'.static::$collection.'.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
 			// var_dump(self::$driverVersion);
 			
-			if(self::$driverVersion >= '1.3.0') {
-	
+			if(self::$driverVersion >= '1.3.0' && 1 == 2) {
+				$defaultOptions = array('upsert' => false, 'new' => true);
+				
+				// var_dump('db.'.static::$collection.'.findAndModify('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode($_fields).', '.json_encode(array_merge($defaultOptions, $options)).')');
+				
 				$result = self::connection()->findAndModify(
 					static::$collection,
 					$_params,
 					$_data->cleanData,
-					$_fields,
+					null, // $_fields, BUG HERE!
 					array_merge($defaultOptions, $options)
 				);
+				
+				var_dump($result);
+				
+				if(isset($result) && $result !== false){
+					return  Hydrator::hydrate(get_called_class(), $result ,"one");
+				}
 	
 			} else {
 	
@@ -408,12 +417,7 @@ abstract class Model
 				if(isset($status) && isset($status['n']) && $status['n'] == true) {
 					return self::one($params, $fields);
 				}
-			}
-				
-			if(isset($result) && $result !== false){
-				return  Hydrator::hydrate(get_called_class(), $result ,"one");
-			}
-				
+			}	
 		}
 	
 		return false;
