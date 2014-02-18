@@ -558,7 +558,7 @@ abstract class Model
 	 */
 	public static function one($params = array(), $fields = array())
 	{
-		// (static::$collection.'.one('.json_encode($params).', '.json_encode($fields).')');
+		// var_dump(static::$collection.'.one('.json_encode($params).', '.json_encode($fields).')');
 
 		$class = get_called_class();
 		$types = $class::getModelTypes();
@@ -567,12 +567,15 @@ abstract class Model
 		}
 		
 		// Run Bootstrap functions (Validate & Format)
-		$params = \Bootstrap::checkParams(get_called_class(), $params);
-		$fields = \Bootstrap::checkFields(get_called_class(), $fields);
+		$_params = \Bootstrap::checkParams(get_called_class(), $params);
+		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
 		
 		// Security checks for valid query paramaters
-		if(isset($fields) && is_array($fields) && !empty($fields)) {
-			$result =  self::connection()->find_one(static::$collection, $params , $fields);
+		if(isset($_fields) && is_array($_fields) && !empty($_fields)) {
+			
+			// var_dump('db.'.static::$collection.'.find_one('.json_encode($_params).', '.json_encode($_fields).')');
+			
+			$result =  self::connection()->find_one(static::$collection, $_params , $_fields);
 			if($result){
 				return  Hydrator::hydrate(get_called_class(), $result ,"one");
 			}
