@@ -613,7 +613,9 @@ abstract class Model
 		// Security checks for valid query paramaters
 		if(isset($fields) && is_array($fields) && !empty($fields)) {
 			
-			// var_dump('db.'.static::$collection.'.find('.json_encode($params).', '.json_encode($fields).')');
+// 			var_dump('db.'.static::$collection.'.find('.json_encode($params).', '.json_encode($fields).')');
+// 			var_dump($fields);
+// 			var_dump($params);
 			
 			$results =  self::connection()->find(static::$collection, $params, $fields);
 			
