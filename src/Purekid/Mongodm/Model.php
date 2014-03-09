@@ -366,16 +366,16 @@ abstract class Model
 	 * @param  array $fields
 	 * @return Model
 	 */
-	public static function update($params = array(), $data = array(), $fields = array(), $options = array())
+	public static function update($params = array(), $data = array(), $fields = array(), $options = array(), $admin_override = false)
 	{
-		// var_dump(static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).')');
+// 		var_dump(static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).','.$admin_override.')');
 		
 		$defaultOptions = array('multi' => false, 'safe' => true);
 	
 		// Run Bootstrap functions (Validate & Format)
-		$_params = \Bootstrap::checkParams(get_called_class(), $params);
-		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => $data), 'update');
-		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
+		$_params = \Bootstrap::checkParams(get_called_class(), $params, $admin_override);
+		$_data = \Bootstrap::checkData(get_called_class(), (object)array('cleanData' => $data), 'update', $admin_override);
+		$_fields = \Bootstrap::checkFields(get_called_class(), $fields, $admin_override);
 		
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
@@ -416,7 +416,7 @@ abstract class Model
 				// var_dump(self::connection()->lastError());
 				
 				if(isset($status) && isset($status['n']) && $status['n'] == true) {
-					return self::one($params, $fields);
+					return self::one($params, $fields, $admin_override);
 				}
 			}	
 		}
@@ -557,9 +557,9 @@ abstract class Model
 	 * @param  array $fields
 	 * @return Model
 	 */
-	public static function one($params = array(), $fields = array())
+	public static function one($params = array(), $fields = array(), $admin_override = false)
 	{
-		// var_dump(static::$collection.'.one('.json_encode($params).', '.json_encode($fields).')');
+// 		var_dump(static::$collection.'.one('.json_encode($params).', '.json_encode($fields).', '.json_encode($admin_override).')');
 
 		$class = get_called_class();
 		$types = $class::getModelTypes();
@@ -568,8 +568,8 @@ abstract class Model
 		}
 		
 		// Run Bootstrap functions (Validate & Format)
-		$_params = \Bootstrap::checkParams(get_called_class(), $params);
-		$_fields = \Bootstrap::checkFields(get_called_class(), $fields);
+		$_params = \Bootstrap::checkParams(get_called_class(), $params, $admin_override);
+		$_fields = \Bootstrap::checkFields(get_called_class(), $fields, $admin_override);
 		
 		// Security checks for valid query paramaters
 		if(isset($_fields) && is_array($_fields) && !empty($_fields)) {
@@ -578,7 +578,7 @@ abstract class Model
 			
 			$result =  self::connection()->find_one(static::$collection, $_params , $_fields);
 			if($result){
-				return  Hydrator::hydrate(get_called_class(), $result ,"one");
+				return  Hydrator::hydrate(get_called_class(), $result ,"one", $admin_override);
 			}
 		}
 	
@@ -595,7 +595,7 @@ abstract class Model
 	 * @param  int $skip
 	 * @return Collection
 	 */
-	public static function find($params = array(), $sort = array(), $fields = array() , $limit = null , $skip = null)
+	public static function find($params = array(), $sort = array(), $fields = array() , $limit = null , $skip = null, $admin_override = false)
 	{
 	
 		// var_dump('find('.json_encode($params).', '.json_encode($sort).', '.json_encode(count($fields)).')');
@@ -607,8 +607,8 @@ abstract class Model
 		}
 		
 		// Run Bootstrap functions (Validate & Format)
-		$params = \Bootstrap::checkParams(get_called_class(), $params);
-		$fields = \Bootstrap::checkFields(get_called_class(), $fields);
+		$params = \Bootstrap::checkParams(get_called_class(), $params, $admin_override);
+		$fields = \Bootstrap::checkFields(get_called_class(), $fields, $admin_override);
 		
 		// Security checks for valid query paramaters
 		if(isset($fields) && is_array($fields) && !empty($fields)) {

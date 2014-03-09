@@ -12,7 +12,7 @@ namespace Purekid\Mongodm;
 class Hydrator 
 {
 
-	public static function hydrate($class, $results,$type = "set")
+	public static function hydrate($class, $results,$type = "set", $admin_override = false)
 	{
 		
 		if(!class_exists($class)){
@@ -25,7 +25,7 @@ class Hydrator
 			}
 			return Collection::make($models);
 		}else{
-			$model = self::pack($class,$results);
+			$model = self::pack($class,$results, $admin_override);
 			return $model;
 		}
 		
@@ -33,7 +33,7 @@ class Hydrator
 		
 	}
 	
-	private static function pack($class, $result)
+	private static function pack($class, $result, $admin_override = false)
 	{
 		// var_dump('Hydrator.pack('.json_encode($class).', '.json_encode($result).')');
 		
@@ -44,7 +44,7 @@ class Hydrator
 		}
 		
 		// Run Document formator
-		return \Bootstrap::checkData($class, $model, 'read');
+		return \Bootstrap::checkData($class, $model, 'read', $admin_override);
 		
 	}
 	
