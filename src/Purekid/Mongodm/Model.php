@@ -371,6 +371,22 @@ abstract class Model
 // 		var_dump(static::$collection.'.update('.json_encode($params).', '.json_encode($data).', '.json_encode($fields).', '.json_encode($options).','.$admin_override.')');
 		
 		$defaultOptions = array('multi' => false, 'safe' => true);
+		
+		$query = \Bootstrap::query(
+			get_called_class(),
+			'update', 
+			array(
+				'params' => (object)array('cleanData' => $data),
+				'data' => (object)array('cleanData' => $data),
+				'fields' => $fields,
+				'options' => $options
+			),
+			$admin_override
+		);
+		
+		
+		var_dump($query);
+		die();
 	
 		// Run Bootstrap functions (Validate & Format)
 		$_params = \Bootstrap::checkParams(get_called_class(), $params, $admin_override);
@@ -380,9 +396,9 @@ abstract class Model
 		// Security checks for valid query paramaters
 		if(isset($_params) && !empty($_params) && isset($_data) && is_object($_data) && isset($_data->cleanData) && is_array($_data->cleanData) && !empty($_data->cleanData) && isset($_fields) && is_array($_fields) && !empty($_fields)) {
 			
-// 			var_dump('db.'.static::$collection.'.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
+			var_dump('db.'.static::$collection.'.update('.json_encode($_params).', '.json_encode($_data->cleanData).', '.json_encode(count($_fields)).', '.json_encode(array_merge($defaultOptions, $options)).')');
 			// var_dump(self::$driverVersion);
-// 			var_dump($_data->cleanData);
+			var_dump($_data->cleanData);
 			
 			if(self::$driverVersion >= '1.3.0' && 1 == 2) {
 				$defaultOptions = array('upsert' => false, 'new' => true);
@@ -405,12 +421,12 @@ abstract class Model
 	
 			} else {
 	
-				$status = self::connection()->update(
-					static::$collection,
-					$_params,
-					$_data->cleanData,
-					array_merge($defaultOptions, $options)
-				);
+// 				$status = self::connection()->update(
+// 					static::$collection,
+// 					$_params,
+// 					$_data->cleanData,
+// 					array_merge($defaultOptions, $options)
+// 				);
 				
 				// var_dump($status);
 				// var_dump(self::connection()->lastError());
